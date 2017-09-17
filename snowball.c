@@ -28,7 +28,7 @@ int error (const char *message);
 int snowball(FILE *data_in, FILE *data_out, int mode, money_t extra_payment);
 
 /* Calculates the minimum payment of LOAN */
-money_t calc_minimum_payment(struct Loan *loan);
+money_t calc_minimum_payment(const struct Loan *loan);
 
 /* Pay LOAN with an optional EXTRA_PAYMENT */
 void pay(struct Loan *loan, money_t *extra_payment);
@@ -145,7 +145,7 @@ int error (const char *message) {
   return 1;
 }
 
-money_t calc_minimum_payment(struct Loan *l) {
+money_t calc_minimum_payment(const struct Loan *l) {
   double pvif;
   if (l->rate == 0)
     return l->balance / l->term;
