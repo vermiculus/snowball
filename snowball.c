@@ -75,7 +75,7 @@ int main (int argc, char **argv) {
   if (mode == SINGLE_MODE) {
     printf("system: using loan data file: %s\n", (data_in == stdin) ? "(standard input)" : argv[2]);
     printf("system: using output file: %s\n",    (outfile == NULL)  ? "(no output)" : (outfile == stdout) ? "(standard output)" : argv[3]);
-    printf("system: monthly payoff rate: %.2lf\n", monthly_payment);
+    printf("system: monthly payoff rate: %.2lf\n", -monthly_payment);
     start = clock();
   }
 
