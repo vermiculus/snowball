@@ -211,6 +211,7 @@ void pay(struct Loan *loan, money_t *extra) {
   } else {
     loan->balance -= total_pmt;
     loan->balance += loan->balance * loan->rate;
+    *extra = 0;
   }
 }
 
