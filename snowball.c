@@ -10,11 +10,12 @@
 
 #define BATCH_MODE 1
 #define SINGLE_MODE 2
+#define MAX_ID_LEN 8
 
 typedef double money_t;
 
 struct Loan {
-  int     id;
+  char    id[MAX_ID_LEN];
   money_t balance;
   double  rate;
   double  term;
@@ -153,9 +154,9 @@ money_t calc_minimum_payment(const struct Loan *l) {
   return l->rate * l->balance * pvif / (pvif - 1);
 }
 
-struct Loan make_loan(int id, double balance, double rate, double term) {
+struct Loan make_loan(char *id, double balance, double rate, double term) {
   struct Loan l;
-  l.id      = id;
+  strcpy(l.id, id);
   l.balance = -balance;
   l.rate    = rate / PERIOD_SUBDIVISION;
   l.term    = term * PERIOD_SUBDIVISION;
@@ -164,10 +165,12 @@ struct Loan make_loan(int id, double balance, double rate, double term) {
 }
 
 void read_loans(FILE *file, struct Loan *loans) {
-  int line, loan_id;
+  int line;
+  char loan_id[MAX_ID_LEN];
   double balance, rate, term;
   for (line = 0; line < NUMBER_OF_LOANS; line++) {
-    fscanf(file, "%d %lf %lf %lf", &loan_id, &balance, &rate, &term);
+    fscanf(file, "%s %lf %lf %lf", loan_id, &balance, &rate, &term);
+    loan_id[MAX_ID_LEN-1] = '\0';
     loans[line] = make_loan(loan_id, balance, rate, term);
   }
 }
@@ -177,7 +180,7 @@ void print_loan_summary(FILE *to, const struct Loan *loans) {
   fprintf(to, "| Loan ID | Balance | Rate | Term | Minimum Payment |\n|--|\n");
   for (int line = 0; line < NUMBER_OF_LOANS; line++) {
     l = loans[line];
-    fprintf(to, "| (id:%d) | %.2lf | %.4lf | %.0lf | %.2lf |\n",
+    fprintf(to, "| %s | %.2lf | %.4lf | %.0lf | %.2lf |\n",
            l.id,
            (double)l.balance,
            l.rate * PERIOD_SUBDIVISION,
@@ -201,7 +204,7 @@ int snowball(FILE *file, FILE *out, int mode, money_t extra_payment) {
     fprintf(out, "\n* Amortization\n");
     fprintf(out, "| month | snowball");
     for (int i = 0; i < NUMBER_OF_LOANS; i++) {
-      fprintf(out, " | (id:%d)", loans[i].id);
+      fprintf(out, " | %s", loans[i].id);
     }
     fprintf(out, " |\n|       | minimum ");
     for (int i = 0; i < NUMBER_OF_LOANS; i++) {
