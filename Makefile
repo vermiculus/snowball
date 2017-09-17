@@ -3,5 +3,5 @@
 test: snowball
 	python order.py
 
-snowball:
-	gcc -o snowball snowball.c
+snowball: snowball.c loan.c
+	gcc -o snowball loan.c snowball.c
