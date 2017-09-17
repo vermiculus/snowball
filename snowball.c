@@ -65,24 +65,25 @@ int parseargs(int argc, char **argv, int *mode, FILE **data_in, FILE **data_out,
 int main (int argc, char **argv) {
   clock_t start, stop;
   FILE *data_in, *outfile;
-  int mode;
+  int mode, code, do_output;
   double monthly_payment;
   struct Loan loans[NUMBER_OF_LOANS];
 
   if (parseargs(argc, argv, &mode, &data_in, &outfile, &monthly_payment))
     return 1;
 
-  if (mode == SINGLE_MODE) {
-    printf("system: using loan data file: %s\n", (data_in == stdin) ? "(standard input)" : argv[2]);
-    printf("system: using output file: %s\n",    (outfile == NULL)  ? "(no output)" : (outfile == stdout) ? "(standard output)" : argv[3]);
-    printf("system: monthly payoff rate: %.2lf\n", -monthly_payment);
+  do_output = mode == SINGLE_MODE && outfile != NULL;
+
+  if (do_output) {
+    fprintf(outfile, "system: using loan data file: %s\n", (data_in == stdin) ? "(standard input)" : argv[2]);
+    fprintf(outfile, "system: using output file: %s\n",    (outfile == NULL)  ? "(no output)" : (outfile == stdout) ? "(standard output)" : argv[3]);
+    fprintf(outfile, "system: monthly payoff rate: %.2lf\n", -monthly_payment);
     start = clock();
   }
 
-  if (snowball_internal(mode, data_in, outfile, monthly_payment))
-    return 1;
+  code = snowball_internal(mode, data_in, outfile, monthly_payment);
 
-  if (mode == SINGLE_MODE)
+  if (do_output)
     stop  = clock();
 
   if (data_in != stdin)
@@ -90,11 +91,11 @@ int main (int argc, char **argv) {
   if (outfile != NULL && outfile != stdout)
     fclose(outfile);
 
-  if (mode == SINGLE_MODE) {
-    printf("system: execution time: %lfms\n", (double)(stop - start) / CLOCKS_PER_SEC * 1000);
-    printf("system: bye!\n");
+  if (do_output) {
+    fprintf(outfile, "system: execution time: %lfms\n", (double)(stop - start) / CLOCKS_PER_SEC * 1000);
+    fprintf(outfile, "system: bye!\n");
   }
-  return 0;
+  return code;
 }
 
 int snowball_internal(int mode, FILE *in, FILE *out, double monthly_payment) {
@@ -102,8 +103,10 @@ int snowball_internal(int mode, FILE *in, FILE *out, double monthly_payment) {
   read_loans(in, loans);
   money_t tot_min = total_minimum_payments(loans);
   if (monthly_payment > tot_min) {
-    printf("%.2lf doesn't cover the minimum payments totaling %.2lf\n",
-           -monthly_payment, -tot_min);
+    if (out != NULL) {
+      fprintf(out, "%.2lf doesn't cover the minimum payments totaling %.2lf\n",
+              -monthly_payment, -tot_min);
+    }
     return 1;
   }
   snowball(out, loans, mode, monthly_payment - tot_min);
