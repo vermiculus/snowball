@@ -178,15 +178,15 @@ void read_loans(FILE *file, struct Loan *loans) {
 
 void print_loan_summary(FILE *to, const struct Loan *loans) {
   struct Loan l;
-  fprintf(to, "| Loan ID | Balance | Rate | Term | Minimum Payment |\n|--|\n");
+  fprintf(to, "| Loan ID | Balance ($) | Rate (%%) | Term | Minimum Payment ($) |\n|--|\n");
   for (int line = 0; line < NUMBER_OF_LOANS; line++) {
     l = loans[line];
-    fprintf(to, "| %s | %.2lf | %.4lf | %.0lf | %.2lf |\n",
-           l.id,
-           (double)l.balance,
-           l.rate * PERIOD_SUBDIVISION,
-           l.term / PERIOD_SUBDIVISION,
-           l.minimum_payment);
+    fprintf(to, "| %s | %0.2lf | %02.2lf | %0.1lf | %.2lf |\n",
+            l.id,
+            -(double)l.balance,
+            l.rate * PERIOD_SUBDIVISION * 100,
+            l.term / PERIOD_SUBDIVISION,
+            -l.minimum_payment);
   }
 }
 
@@ -217,14 +217,24 @@ int snowball(FILE *file, FILE *out, int mode, money_t extra_payment) {
   while (balance(loans) < 0) {
     month += 1;
     extra_payment_remaining = extra_payment + freed_payments(loans);
-    if (verbose)
-      fprintf(out, "| %d | %.2lf", month, extra_payment_remaining);
+    if (verbose) {
+      if (extra_payment_remaining == 0) {
+        fprintf(out, "| %d | --", month);
+      } else {
+        fprintf(out, "| %d | %.2lf", month, -extra_payment_remaining);
+      }
+    }
     for (int i = 0; i < NUMBER_OF_LOANS; i++) {
       if (loans[i].balance < 0) {
         pay(&loans[i], &extra_payment_remaining);
       }
-      if (verbose)
-        fprintf(out, " | %.2lf", loans[i].balance);
+      if (verbose) {
+        if (loans[i].balance == 0) {
+          fprintf(out, " | --");
+        } else {
+          fprintf(out, " | %.2lf", -loans[i].balance);
+        }
+      }
     }
     if (verbose)
       fprintf(out, " |\n");
