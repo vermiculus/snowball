@@ -73,16 +73,16 @@ int parseargs(int argc, char **argv, int *mode, double *monthly_payment) {
     return 1;
   }
 
-  /* 0          1          2               */
-  /* ./snowball -h                         */
-  /* ./snowball batchmode  monthly_payment */
-  /* ./snowball batchmode  monthly_payment */
-  /* ./snowball singlemode monthly_payment */
-  /* ./snowball singlemode monthly_payment */
+  /* 0          1      2       */
+  /* ./snowball -h             */
+  /* ./snowball simple payment */
+  /* ./snowball simple payment */
+  /* ./snowball report payment */
+  /* ./snowball report payment */
 
-  if (!strcmp(argv[1], "batchmode")) {
+  if (!strcmp(argv[1], "simple")) {
     *mode = BATCH_MODE;
-  } else if (!strcmp(argv[1], "singlemode")) {
+  } else if (!strcmp(argv[1], "report")) {
     *mode = SINGLE_MODE;
   } else {
     help(argv[0]);
