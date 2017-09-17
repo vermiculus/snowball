@@ -2,10 +2,14 @@
 #include "math.h"
 #include "time.h"
 #include "string.h"
+#include "stdlib.h"
 
 #define ERR_NO_FILE -1
 #define PERIOD_SUBDIVISION 12
 #define NUMBER_OF_LOANS 23
+
+#define BATCH_MODE 1
+#define SINGLE_MODE 2
 
 typedef double money_t;
 
@@ -20,13 +24,8 @@ struct Loan {
 /* Print out MESSAGE.  Returns `1' */
 int error (const char *message);
 
-/* Try to open FILEPATH in MODE.  Handle errors. */
-/* If FILEPATH is opened successfully, pass to HANDLER. */
-/* After HANDLER is done, close the file again. */
-int withopenfile(const char *filepath, const char *mode, int (*handler)(FILE*));
-
 /* The main logic of the program. */
-int snowball(FILE *data_in, FILE *data_out);
+int snowball(FILE *data_in, FILE *data_out, int mode, money_t extra_payment);
 
 /* Calculates the minimum payment of LOAN */
 money_t calc_minimum_payment(struct Loan *loan);
@@ -53,78 +52,97 @@ void help(const char *me) {
          , me);
 }
 
+int parseargs(int argc, char **argv, int *mode, FILE **data_in, FILE **data_out, double *extra_payment);
+
 /* Entry point. */
 int main (int argc, char **argv) {
   clock_t start, stop;
-  int handler_return_value;
   FILE *data_in, *outfile;
+  int mode;
+  double extra_payment;
 
-  if (argc == 2 && !strcmp(argv[1],"-h")) {
-    help(argv[0]);
-    return 0;
+  if (parseargs(argc, argv, &mode, &data_in, &outfile, &extra_payment))
+    return 1;
+
+  if (mode == SINGLE_MODE) {
+    printf("system: using loan data file: %s\n", (data_in == stdin) ? "(standard input)" : argv[1]);
+    printf("system: using output file: %s\n",    (outfile == NULL)  ? "(no output)" : (outfile == stdout) ? "(standard output)" : argv[2]);
+    start = clock();
   }
-
-  if (argc < 2) {
-    help(argv[0]);
-    return error("need loan data file (or use \"--\" for stdin)");
-  }
-
-  if (!strcmp(argv[1], "--")) {
-    data_in = stdin;
-  } else {
-    data_in = fopen(argv[1], "r");
-    if (data_in == NULL) {
-      return error("unreadable file for argv[1]");
-    }
-  }
-  if (argc >= 3) {
-    if (!strcmp(argv[2], "--")) {
-      outfile = stdout;
-    } else {
-      outfile = fopen(argv[2], "w");
-      if (outfile == NULL) {
-        return error("unwritable file for argv[2]");
-      }
-    }
-  }
-
-  printf("system: using loan data file: %s\n", (data_in == stdin) ? "(standard input)" : argv[1]);
-  printf("system: using output file: %s\n",    (outfile == NULL)  ? "(no output)" : (outfile == stdout) ? "(standard output)" : argv[2]);
-
-  start = clock();
-  snowball(data_in, outfile);
-  stop  = clock();
+  snowball(data_in, outfile, mode, extra_payment);
+  if (mode == SINGLE_MODE)
+    stop  = clock();
 
   if (data_in != stdin)
     fclose(data_in);
   if (outfile != NULL && outfile != stdout)
     fclose(outfile);
 
-  printf("system: execution time: %lfms\n", (double)(stop - start) / CLOCKS_PER_SEC * 1000);
-  printf("system: bye!\n");
+  if (mode == SINGLE_MODE) {
+    printf("system: execution time: %lfms\n", (double)(stop - start) / CLOCKS_PER_SEC * 1000);
+    printf("system: bye!\n");
+  }
+  return 0;
+}
+
+int parseargs(int argc, char **argv, int *mode, FILE **data_in, FILE **data_out, double *extra_payment) {
+  if (argc == 2 && !strcmp(argv[1],"-h")) {
+    help(argv[0]);
+    return 0;
+  }
+  if (argc != 5) {
+    help(argv[0]);
+    return 1;
+  }
+  if (!strcmp(argv[2], argv[3])) {
+    return error("refusing to clobber in-file with out-file");
+  }
+
+  /* 0          1          2       3        4             */
+  /* ./snowball -h                                        */
+  /* ./snowball batchmode  @stdin  @stdout  extra_payment */
+  /* ./snowball batchmode  @stdin  @none    extra_payment */
+  /* ./snowball singlemode @stdin  file.out extra_payment */
+  /* ./snowball singlemode file.in file.out extra_payment */
+
+  if (!strcmp(argv[1], "batchmode")) {
+    *mode = BATCH_MODE;
+  } else if (!strcmp(argv[1], "singlemode")) {
+    *mode = SINGLE_MODE;
+  } else {
+    help(argv[0]);
+    return 1;
+  }
+
+  *extra_payment = -strtod(argv[4], NULL);
+
+  if (!strcmp(argv[2], "@stdin")) {
+    *data_in = stdin;
+  } else {
+    *data_in = fopen(argv[2], "r");
+    if (*data_in == NULL) {
+      return error("unreadable in-file");
+    }
+  }
+
+  if (!strcmp(argv[3], "@stdout")) {
+    *data_out = stdout;
+  } else if (strcmp(argv[3], "@none")) {
+    *data_out = fopen(argv[3], "w");
+    if (*data_out == NULL) {
+      if (*data_in != stdin) {
+        fclose(*data_in);
+      }
+      return error("unwritable out-file");
+    }
+  }
+
   return 0;
 }
 
 int error (const char *message) {
   printf("error: %s\n", message);
   return 1;
-}
-
-int withopenfile(const char *filepath, const char *mode, int (*handler)(FILE*)) {
-  FILE *file;
-  int handler_return_value;
-
-  file = fopen(filepath, mode);
-
-  if (file == NULL) {
-    return ERR_NO_FILE;
-  }
-
-  handler_return_value = (*handler)(file);
-
-  fclose(file);
-
-  return handler_return_value;
 }
 
 money_t calc_minimum_payment(struct Loan *l) {
@@ -138,7 +156,7 @@ money_t calc_minimum_payment(struct Loan *l) {
 struct Loan make_loan(int id, double balance, double rate, double term) {
   struct Loan l;
   l.id      = id;
-  l.balance = balance;
+  l.balance = -balance;
   l.rate    = rate / PERIOD_SUBDIVISION;
   l.term    = term * PERIOD_SUBDIVISION;
   l.minimum_payment = calc_minimum_payment(&l);
@@ -156,9 +174,10 @@ void read_loans(FILE *file, struct Loan *loans) {
 
 void print_loan_summary(FILE *to, const struct Loan *loans) {
   struct Loan l;
+  fprintf(to, "| Loan ID | Balance | Rate | Term | Minimum Payment |\n|--|\n");
   for (int line = 0; line < NUMBER_OF_LOANS; line++) {
     l = loans[line];
-    fprintf(to, "(id:%d) %.2lf %.4lf %.0lf %.2lf\n",
+    fprintf(to, "| (id:%d) | %.2lf | %.4lf | %.0lf | %.2lf |\n",
            l.id,
            (double)l.balance,
            l.rate * PERIOD_SUBDIVISION,
@@ -167,34 +186,51 @@ void print_loan_summary(FILE *to, const struct Loan *loans) {
   }
 }
 
-int snowball(FILE *file, FILE *out) {
+int snowball(FILE *file, FILE *out, int mode, money_t extra_payment) {
   struct Loan loans[NUMBER_OF_LOANS];
   struct Loan l;
   int month = 0;
-  money_t extra_payment;
+  money_t extra_payment_remaining;
+  int verbose = mode == SINGLE_MODE && out != NULL;
 
   read_loans(file, loans);
-  if (out != NULL) {
-    fprintf(out, "Summary of Loans\n");
+  if (verbose) {
+    fprintf(out, "# -*- mode: org -*-\n");
+    fprintf(out, "* Summary of Loans\n");
     print_loan_summary(out, loans);
+    fprintf(out, "\n* Amortization\n");
+    fprintf(out, "| month | snowball");
+    for (int i = 0; i < NUMBER_OF_LOANS; i++) {
+      fprintf(out, " | (id:%d)", loans[i].id);
+    }
+    fprintf(out, " |\n|       | minimum ");
+    for (int i = 0; i < NUMBER_OF_LOANS; i++) {
+      fprintf(out, " | %.2lf", loans[i].minimum_payment);
+    }
+    fprintf(out, " |\n|--|\n");
   }
 
   while (balance(loans) < 0) {
     month += 1;
-    extra_payment = -50;
-    extra_payment += freed_payments(loans);
-    if (out != NULL)
-      fprintf(out, "(extra:%.2lf) ", extra_payment);
+    extra_payment_remaining = extra_payment + freed_payments(loans);
+    if (verbose)
+      fprintf(out, "| %d | %.2lf", month, extra_payment_remaining);
     for (int i = 0; i < NUMBER_OF_LOANS; i++) {
-      pay(&loans[i], &extra_payment);
-      if (out != NULL)
-        fprintf(out, "%.2lf ", loans[i].balance);
+      if (loans[i].balance < 0) {
+        pay(&loans[i], &extra_payment_remaining);
+      }
+      if (verbose)
+        fprintf(out, " | %.2lf", loans[i].balance);
     }
-    if (out != NULL)
-      fprintf(out, "\n");
+    if (verbose)
+      fprintf(out, " |\n");
   }
 
-  printf("snowball: %d months\n", month);
+  if (mode == BATCH_MODE) {
+    fprintf(out, "%d\n", month);
+  } else if (verbose) {
+    fprintf(out, "Loans will be paid in %d months.\n", month);
+  }
 
   return 0;
 }
