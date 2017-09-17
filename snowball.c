@@ -241,9 +241,11 @@ int snowball(struct Loan *loans, int mode, money_t extra_payment) {
 
 void pay(struct Loan *loan, money_t *extra) {
   int total_pmt = loan->minimum_payment;
+  money_t ignore = 0;
+  if (extra == NULL)
+    extra = &ignore;
 
-  if (extra != NULL)
-    total_pmt += *extra;
+  total_pmt += *extra;
 
   if (loan->balance >= total_pmt) {
     *extra = total_pmt - loan->balance;
