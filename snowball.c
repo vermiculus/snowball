@@ -26,7 +26,9 @@ struct Loan {
 int error (const char *message);
 
 /* The main logic of the program. */
-int snowball(FILE *data_in, FILE *data_out, int mode, money_t extra_payment);
+int snowball(FILE *out, struct Loan *loans, int mode, money_t monthly_payment);
+
+int snowball_internal(int mode, FILE *in, FILE *out, double monthly_payment);
 
 /* Calculates the minimum payment of LOAN */
 money_t calc_minimum_payment(const struct Loan *loan);
@@ -39,6 +41,10 @@ money_t balance(const struct Loan *loans);
 
 /* Sum the minimum payments of all loans in LOANS whose balance is 0 */
 money_t freed_payments(const struct Loan *loans);
+
+void read_loans(FILE *file, struct Loan *loans);
+
+money_t total_minimum_payments(const struct Loan *loans);
 
 void help(const char *me) {
   printf(
@@ -61,6 +67,7 @@ int main (int argc, char **argv) {
   FILE *data_in, *outfile;
   int mode;
   double monthly_payment;
+  struct Loan loans[NUMBER_OF_LOANS];
 
   if (parseargs(argc, argv, &mode, &data_in, &outfile, &monthly_payment))
     return 1;
@@ -71,7 +78,10 @@ int main (int argc, char **argv) {
     printf("system: monthly payoff rate: %.2lf\n", monthly_payment);
     start = clock();
   }
-  snowball(data_in, outfile, mode, monthly_payment);
+
+  if (snowball_internal(mode, data_in, outfile, monthly_payment))
+    return 1;
+
   if (mode == SINGLE_MODE)
     stop  = clock();
 
@@ -84,6 +94,19 @@ int main (int argc, char **argv) {
     printf("system: execution time: %lfms\n", (double)(stop - start) / CLOCKS_PER_SEC * 1000);
     printf("system: bye!\n");
   }
+  return 0;
+}
+
+int snowball_internal(int mode, FILE *in, FILE *out, double monthly_payment) {
+  struct Loan loans[NUMBER_OF_LOANS];
+  read_loans(in, loans);
+  money_t tot_min = total_minimum_payments(loans);
+  if (monthly_payment > tot_min) {
+    printf("%.2lf doesn't cover the minimum payments totaling %.2lf\n",
+           -monthly_payment, -tot_min);
+    return 1;
+  }
+  snowball(out, loans, mode, monthly_payment - tot_min);
   return 0;
 }
 
@@ -191,23 +214,11 @@ void print_loan_summary(FILE *to, const struct Loan *loans) {
   }
 }
 
-int snowball(FILE *file, FILE *out, int mode, money_t monthly_payment) {
-  struct Loan loans[NUMBER_OF_LOANS];
+int snowball(FILE *out, struct Loan *loans, int mode, money_t extra_payment) {
   struct Loan l;
   int month = 0;
-  money_t extra_payment, extra_payment_remaining, tot_min;
+  money_t extra_payment_remaining;
   int verbose = mode == SINGLE_MODE && out != NULL;
-
-  read_loans(file, loans);
-
-  for (int i = 0; i < NUMBER_OF_LOANS; i++) {
-    tot_min += loans[i].minimum_payment;
-  }
-  if (monthly_payment > tot_min) {
-    printf("%.2lf is below the total minimum payment of %.2lf\n", -monthly_payment, -tot_min);
-    exit(1);
-  }
-  extra_payment = monthly_payment - tot_min;
 
   if (verbose) {
     fprintf(out, "# -*- mode: org -*-\n");
@@ -290,6 +301,14 @@ money_t freed_payments(const struct Loan *loans) {
     if (loans[i].balance == 0) {
       bal += loans[i].minimum_payment;
     }
+  }
+  return bal;
+}
+
+money_t total_minimum_payments(const struct Loan *loans) {
+  money_t bal = 0;
+  for (int i = 0; i < NUMBER_OF_LOANS; i++) {
+    bal += loans[i].minimum_payment;
   }
   return bal;
 }
