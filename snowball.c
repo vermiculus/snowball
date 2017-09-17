@@ -155,6 +155,7 @@ money_t calc_minimum_payment(const struct Loan *l) {
 }
 
 struct Loan make_loan(char *id, double balance, double rate, double term) {
+  rate /= 100;
   struct Loan l;
   strcpy(l.id, id);
   l.balance = -balance;
