@@ -140,8 +140,3 @@ int parseargs(int argc, char **argv, int *mode, double *monthly_payment) {
 
   return 0;
 }
-
-int error (const char *message) {
-  printf("error: %s\n", message);
-  return 1;
-}

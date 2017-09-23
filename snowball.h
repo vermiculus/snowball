@@ -3,9 +3,6 @@
 
 #include "loan.h"
 
-/* Print out MESSAGE.  Returns `1' */
-int error (const char *message);
-
 /* The main logic of the program. */
 int snowball(LoanList *loans, int mode, money_t monthly_payment);
 
