@@ -2,6 +2,7 @@
 #include "string.h"
 #include "stdio.h"
 
+#include "util.h"
 #include "loan.h"
 
 money_t calc_minimum_payment(const Loan *l) {
@@ -23,7 +24,7 @@ Loan *loan_make(Loan *dest, char *name, double balance, double rate, double term
   dest->minimum_payment = calc_minimum_payment(dest);
 
   dest->__original_balance = dest->balance;
-  dest->__colwidth = (int)floor(log10(-dest->balance)) + 4;
+  dest->__colwidth = util_digits(-dest->balance) + 4;
 
   return dest;
 }

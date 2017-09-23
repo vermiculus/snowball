@@ -3,6 +3,7 @@
 #include "string.h"
 #include "math.h"
 
+#include "util.h"
 #include "loan.h"
 #include "loanlist.h"
 
@@ -43,10 +44,10 @@ int max(int a, int b) { return a > b ? a : b; }
 void loanlist_print__find_col_widths(Loan *l, void *io) {
   int *lens = (int*)io;
   lens[0] = max(lens[0], strlen(l->name));
-  lens[1] = max(lens[1], floor(log10(-l->balance)));
-  lens[2] = max(lens[2], floor(log10(l->rate * PERIOD_SUBDIVISION * 100)));
-  lens[3] = max(lens[3], floor(log10(l->term / PERIOD_SUBDIVISION)));
-  lens[4] = max(lens[4], floor(log10(-l->minimum_payment)));
+  lens[1] = max(lens[1], util_digits(-l->balance));
+  lens[2] = max(lens[2], util_digits(l->rate * PERIOD_SUBDIVISION * 100));
+  lens[3] = max(lens[3], util_digits(l->term / PERIOD_SUBDIVISION));
+  lens[4] = max(lens[4], util_digits(-l->minimum_payment));
 }
 void loanlist_print(LoanList *loans) {
   const char * const headers[5] = {
