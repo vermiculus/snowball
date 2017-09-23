@@ -17,7 +17,10 @@ Loan *loan_make(Loan *dest, char *name, double balance, double rate, double term
   if (dest == NULL)
     return NULL;
   rate /= 100;
-  strcpy(dest->name, name);
+
+  strncpy(dest->name, name, sizeof(dest->name) - 1);
+  dest->name[sizeof(dest->name) - 1] = '\0';
+
   dest->balance = -balance;
   dest->rate    = rate / PERIOD_SUBDIVISION;
   dest->term    = term * PERIOD_SUBDIVISION;
