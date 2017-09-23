@@ -100,9 +100,11 @@ int snowball_internal(int mode, double extra_monthly_payment) {
     printf("\n");
     printf("These loans will be paid in %d months.\n",
            loanlist_amort(&loans, extra_monthly_payment, 1));
+    break;
   case MODE_SHUFFLE:
     loanlist_print(&loans);
     loanlist_order(&loans, 10000, extra_monthly_payment);
+    break;
   }
 
   return 0;
