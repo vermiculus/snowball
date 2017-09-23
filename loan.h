@@ -1,7 +1,7 @@
 #ifndef LOAN_H
 #define LOAN_H
 
-#define MAX_ID_LEN 8
+#define MAX_LOAN_NAME_LEN 8
 #define PERIOD_SUBDIVISION 12
 #define NUMBER_OF_LOANS 23
 
@@ -10,31 +10,23 @@ typedef double money_t;
 typedef struct Loan Loan;
 
 struct Loan {
-  char    id[MAX_ID_LEN];
+  char    name[MAX_LOAN_NAME_LEN];
   money_t balance;
   double  rate;
   double  term;
   money_t minimum_payment;
+  money_t __original_balance;
+  unsigned int __colwidth;
 };
 
-Loan make_loan(char *id, double balance, double rate, double term);
+Loan *loan_make(Loan *dest, char *id, double balance, double rate, double term);
 
-void print_loan_summary(const Loan *loans);
+void loan_reset(Loan *loan);
 
 /* Calculates the minimum payment of LOAN */
-money_t calc_minimum_payment(const Loan *loan);
+money_t loan_calc_minimum_payment(const Loan *loan);
 
 /* Pay LOAN with an optional EXTRA_PAYMENT */
-void pay(Loan *loan, money_t *extra_payment);
-
-/* Determine the remaining balance of an array of LOANS */
-money_t balance(const Loan *loans);
-
-/* Sum the minimum payments of all loans in LOANS whose balance is 0 */
-money_t freed_payments(const Loan *loans);
-
-void read_loans(Loan *loans);
-
-money_t total_minimum_payments(const Loan *loans);
+money_t loan_pay(Loan *loan, money_t *extra_payment);
 
 #endif

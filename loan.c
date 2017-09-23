@@ -4,7 +4,7 @@
 
 #include "loan.h"
 
-money_t calc_minimum_payment(const struct Loan *l) {
+money_t calc_minimum_payment(const Loan *l) {
   double pvif;
   if (l->rate == 0)
     return l->balance / l->term;
@@ -12,44 +12,30 @@ money_t calc_minimum_payment(const struct Loan *l) {
   return l->rate * l->balance * pvif / (pvif - 1);
 }
 
-struct Loan make_loan(char *id, double balance, double rate, double term) {
+Loan *loan_make(Loan *dest, char *name, double balance, double rate, double term) {
+  if (dest == NULL)
+    return NULL;
   rate /= 100;
-  struct Loan l;
-  strcpy(l.id, id);
-  l.balance = -balance;
-  l.rate    = rate / PERIOD_SUBDIVISION;
-  l.term    = term * PERIOD_SUBDIVISION;
-  l.minimum_payment = calc_minimum_payment(&l);
-  return l;
+  strcpy(dest->name, name);
+  dest->balance = -balance;
+  dest->rate    = rate / PERIOD_SUBDIVISION;
+  dest->term    = term * PERIOD_SUBDIVISION;
+  dest->minimum_payment = calc_minimum_payment(dest);
+
+  dest->__original_balance = dest->balance;
+  dest->__colwidth = (int)floor(log10(-dest->balance)) + 4;
+
+  return dest;
 }
 
-void read_loans(struct Loan *loans) {
-  int line;
-  char loan_id[MAX_ID_LEN];
-  double balance, rate, term;
-  for (line = 0; line < NUMBER_OF_LOANS; line++) {
-    scanf("%s %lf %lf %lf", loan_id, &balance, &rate, &term);
-    loan_id[MAX_ID_LEN-1] = '\0';
-    loans[line] = make_loan(loan_id, balance, rate, term);
-  }
+void loan_reset(Loan *loan) {
+  loan->balance = loan->__original_balance;
 }
 
-void print_loan_summary(const struct Loan *loans) {
-  struct Loan l;
-  printf("| Loan ID | Balance ($) | Rate (%%) | Term | Minimum Payment ($) |\n|--|\n");
-  for (int line = 0; line < NUMBER_OF_LOANS; line++) {
-    l = loans[line];
-    printf("| %s | %0.2lf | %02.2lf | %0.1lf | %.2lf |\n",
-            l.id,
-            -(double)l.balance,
-            l.rate * PERIOD_SUBDIVISION * 100,
-            l.term / PERIOD_SUBDIVISION,
-            -l.minimum_payment);
-  }
-}
-
-void pay(struct Loan *loan, money_t *extra) {
+money_t loan_pay(Loan *loan, money_t *extra) {
   int total_pmt = loan->minimum_payment;
+
+  /* If `extra' is null, we want to give it a default value. */
   money_t ignore = 0;
   if (extra == NULL)
     extra = &ignore;
@@ -58,15 +44,17 @@ void pay(struct Loan *loan, money_t *extra) {
 
   if (loan->balance >= total_pmt) {
     *extra = total_pmt - loan->balance;
+    total_pmt -= loan->balance;
     loan->balance = 0;
   } else {
     loan->balance -= total_pmt;
     loan->balance += loan->balance * loan->rate;
     *extra = 0;
   }
+  return total_pmt;
 }
 
-money_t balance(const struct Loan *loans) {
+money_t balance(const Loan *loans) {
   money_t bal = 0;
   for (int i = 0; i < NUMBER_OF_LOANS; i++) {
     bal += loans[i].balance;
@@ -74,7 +62,7 @@ money_t balance(const struct Loan *loans) {
   return bal;
 }
 
-money_t freed_payments(const struct Loan *loans) {
+money_t freed_payments(const Loan *loans) {
   money_t bal = 0;
   for (int i = 0; i < NUMBER_OF_LOANS; i++) {
     if (loans[i].balance == 0) {
@@ -84,7 +72,7 @@ money_t freed_payments(const struct Loan *loans) {
   return bal;
 }
 
-money_t total_minimum_payments(const struct Loan *loans) {
+money_t total_minimum_payments(const Loan *loans) {
   money_t bal = 0;
   for (int i = 0; i < NUMBER_OF_LOANS; i++) {
     bal += loans[i].minimum_payment;

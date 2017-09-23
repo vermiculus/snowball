@@ -7,7 +7,7 @@
 int error (const char *message);
 
 /* The main logic of the program. */
-int snowball(Loan *loans, int mode, money_t monthly_payment);
+int snowball(LoanList *loans, int mode, money_t monthly_payment);
 
 int snowball_internal(int mode, double monthly_payment);
 
