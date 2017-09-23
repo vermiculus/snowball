@@ -60,6 +60,8 @@ int main (int argc, char **argv) {
 
   if (parseargs(argc, argv, &mode, &monthly_payment))
     return 1;
+  if (!strcmp(argv[1], "-h"))
+    return 0;
 
   writelog(mode, "report mode");
   if (monthly_payment < 0) {
