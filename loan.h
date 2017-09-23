@@ -1,7 +1,6 @@
 #ifndef LOAN_H
 #define LOAN_H
 
-#define MAX_LOAN_NAME_LEN 8
 #define PERIOD_SUBDIVISION 12
 #define NUMBER_OF_LOANS 23
 
@@ -10,7 +9,7 @@ typedef double money_t;
 typedef struct Loan Loan;
 
 struct Loan {
-  char    name[MAX_LOAN_NAME_LEN];
+  char    name[8];
   money_t balance;
   double  rate;
   double  term;

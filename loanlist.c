@@ -116,13 +116,14 @@ void loanlist_reset(LoanList *loans) {
 unsigned int loanlist_read (LoanList *dest) {
   unsigned int line = 0;
 
-  char loan_id_buf[MAX_LOAN_NAME_LEN];
+  char *loan_id_buf = malloc(sizeof(dest->values->name));
   double balance, rate, term;
 
   while (scanf("%s %lf %lf %lf", loan_id_buf, &balance, &rate, &term) == 4) {
-    loan_id_buf[MAX_LOAN_NAME_LEN - 1] = '\0';
     loanlist_add(dest, loan_id_buf, balance, rate, term);
   }
+
+  free(loan_id_buf);
   return line;
 }
 
