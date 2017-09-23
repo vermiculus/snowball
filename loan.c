@@ -59,29 +59,3 @@ money_t loan_pay(Loan *loan, money_t *extra) {
   }
   return total_pmt;
 }
-
-money_t balance(const Loan *loans) {
-  money_t bal = 0;
-  for (int i = 0; i < NUMBER_OF_LOANS; i++) {
-    bal += loans[i].balance;
-  }
-  return bal;
-}
-
-money_t freed_payments(const Loan *loans) {
-  money_t bal = 0;
-  for (int i = 0; i < NUMBER_OF_LOANS; i++) {
-    if (loans[i].balance == 0) {
-      bal += loans[i].minimum_payment;
-    }
-  }
-  return bal;
-}
-
-money_t total_minimum_payments(const Loan *loans) {
-  money_t bal = 0;
-  for (int i = 0; i < NUMBER_OF_LOANS; i++) {
-    bal += loans[i].minimum_payment;
-  }
-  return bal;
-}
