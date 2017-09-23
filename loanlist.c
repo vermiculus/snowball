@@ -79,10 +79,15 @@ void loanlist_amort__print_one(Loan *l, void *ignored) {
     printf("%*s--", l->__colwidth - 2, "");
   }
 }
+void loanlist_amort__print_one_header(Loan *l, void *ignored) {
+  printf("  %*s", l->__colwidth, l->name);
+}
 unsigned int loanlist_amort(LoanList *loans, money_t extra_payment, int print) {
   unsigned int num_months = 0;
   money_t extra_payment_remaining;
   if (print) {
+    loanlist_loop(loans, NULL, loanlist_amort__print_one_header, NULL);
+    printf("\n");
     loanlist_loop(loans, NULL, loanlist_amort__print_one, NULL);
     printf("\n");
   }

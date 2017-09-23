@@ -25,6 +25,8 @@ Loan *loan_make(Loan *dest, char *name, double balance, double rate, double term
 
   dest->__original_balance = dest->balance;
   dest->__colwidth = util_digits(-dest->balance) + 4;
+  if (strlen(dest->name) > dest->__colwidth)
+    dest->__colwidth = strlen(dest->name);
 
   return dest;
 }
