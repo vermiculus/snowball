@@ -9,17 +9,20 @@
 
 #define MODE_SIMPLE 1
 #define MODE_REPORT 2
+#define MODE_SHUFFLE 3
 
 void help(const char *me) {
   printf(
          "%s v1: Snowball some loans\n\n"
          "Operates on STDIN and writes results to STDOUT.\n"
          "Use shell redirection to your advantage.\n\n"
-         "  %s {simple|report} [extra_payment]\n\n"
+         "  %s {simple|report|shuffle} [extra_payment]\n\n"
          "  `simple'\n"
          "     Just output the minimum number of months it will take to pay off loans.\n"
          "  `report'\n"
          "     Output the full amortization of the optimal payment plan.\n"
+         "  `shuffle'\n"
+         "     Randomly try to find a good ordering.\n"
          "  `extra_payment'\n"
          "     An extra payment to apply to principle."
          "\n\n\n"
@@ -39,7 +42,7 @@ int writelog(int mode, const char *format, ...) {
   int ret = 0;
   va_start(args, format);
 
-  if(mode == MODE_REPORT)
+  if(mode == MODE_REPORT || mode == MODE_SHUFFLE)
     ret
       =  printf("system: ")
       + vprintf(format, args)
@@ -97,6 +100,9 @@ int snowball_internal(int mode, double extra_monthly_payment) {
     printf("\n");
     printf("These loans will be paid in %d months.\n",
            loanlist_amort(&loans, extra_monthly_payment, 1));
+  case MODE_SHUFFLE:
+    loanlist_print(&loans);
+    loanlist_order(&loans, 10000, extra_monthly_payment);
   }
 
   return 0;
@@ -112,14 +118,12 @@ int parseargs(int argc, char **argv, int *mode, double *monthly_payment) {
     return 1;
   }
 
-  /* 0          1               2         */
-  /* ./snowball -h                        */
-  /* ./snowball {simple|report} [payment] */
-
   if (!strcmp(argv[1], "simple")) {
     *mode = MODE_SIMPLE;
   } else if (!strcmp(argv[1], "report")) {
     *mode = MODE_REPORT;
+  } else if (!strcmp(argv[1], "shuffle")) {
+    *mode = MODE_SHUFFLE;
   } else {
     help(argv[0]);
     return 1;

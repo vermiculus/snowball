@@ -2,6 +2,8 @@
 #include "stdio.h"
 #include "string.h"
 #include "math.h"
+#include "time.h"
+#include "stdlib.h"
 
 #include "util.h"
 #include "loan.h"
@@ -151,6 +153,41 @@ money_t loanlist_minimum_payments(LoanList *loans) {
   loanlist_loop(loans, &bal, loanlist_freed_payments__accum, loanlist_minimum_payments__filter);
   return bal;
 }
+
+
+
+void loanlist_order__swap(Loan *a, Loan *b) {
+  Loan t = *a;
+  *a = *b;
+  *b = t;
+}
+void loanlist_order__shuffle(LoanList *loans) {
+  int i, r;
+  srand(time(NULL));
+  for (i = loans->count - 1; i > 0; i--) {
+    r = rand() % (i+1);
+    loanlist_order__swap(&loans->values[i], &loans->values[r]);
+  }
+}
+
+void loanlist_order(LoanList *loans, unsigned int trials, money_t extra_payment) {
+  int minimum_months = loanlist_amort(loans, extra_payment, 0);
+  printf("Starting minumum: %d\n", minimum_months);
+  int months;
+  for (int i = 0; i < trials; i++) {
+    loanlist_reset(loans);
+    loanlist_order__shuffle(loans);
+    months = loanlist_amort(loans, extra_payment, 0);
+    if (months < minimum_months) {
+      minimum_months = months;
+      printf("New minimum: %d\n", minimum_months);
+      loanlist_reset(loans);
+      loanlist_amort(loans, extra_payment, 1);
+    }
+  }
+}
+
+
 
 /* Have `pay' keep track of how much money was paid.  At the end, this
    can be compared with total principle to determine how much interest

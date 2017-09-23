@@ -28,4 +28,6 @@ money_t loanlist_freed_payments(LoanList *loans);
 money_t loanlist_minimum_payments(LoanList *loans);
 money_t loanlist_balance(LoanList *loans);
 
+void loanlist_order(LoanList *loans, unsigned int trials, money_t extra_payment);
+
 #endif
