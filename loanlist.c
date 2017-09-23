@@ -32,6 +32,10 @@ void loanlist_add(LoanList *loans, char *name, money_t balance, double rate, dou
             name, balance, rate, term);
 }
 
+void loanlist_free(LoanList *l) {
+  free(l->values);
+}
+
 void loanlist_print_one(Loan *l, void *header_lengths) {
   int *lens = (int*)header_lengths;
   printf("   %*s   %*.2lf   %*.2lf   %*.1lf   %*.2lf\n",

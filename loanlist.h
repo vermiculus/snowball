@@ -17,6 +17,8 @@ struct LoanList {
 };
 
 LoanList loanlist_new();
+void     loanlist_free(LoanList *loans);
+
 void loanlist_add  (LoanList *loans, char *name, money_t balance, double rate, double term);
 void loanlist_print(LoanList *loans);
 unsigned int loanlist_amort(LoanList *loans, money_t extra_payment, int print);

@@ -106,6 +106,8 @@ int snowball_internal(int mode, double extra_monthly_payment) {
     break;
   }
 
+  loanlist_free(&loans);
+
   return 0;
 }
 
