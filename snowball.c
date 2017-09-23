@@ -57,7 +57,6 @@ int main (int argc, char **argv) {
   clock_t start, stop;
   int mode, code;
   double monthly_payment;
-  struct Loan loans[NUMBER_OF_LOANS];
 
   if (parseargs(argc, argv, &mode, &monthly_payment))
     return 1;

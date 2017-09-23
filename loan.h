@@ -2,7 +2,6 @@
 #define LOAN_H
 
 #define PERIOD_SUBDIVISION 12
-#define NUMBER_OF_LOANS 23
 
 typedef double money_t;
 
