@@ -10,4 +10,17 @@ Usage
 ```sh
 ./snowball simple 4000 < loans.dat
 ./snowball report 4000 < loans.dat > report.out
+make demo
 ```
+
+Building
+--------
+Run `make`.
+
+Testing
+-------
+Run `make test`.
+
+Coverage
+--------
+Run `make coverage`.
