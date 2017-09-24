@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 echo "Demoing with random data."
-test_loans=$(bash ./testgen.sh 25)
+test_loans=$(bash test/testgen.sh 25)
 months=$(echo "$test_loans" | ./snowball simple)
 echo "'simple' mode: $months\n"
 echo "'report' mode executions follow.\n\n"
