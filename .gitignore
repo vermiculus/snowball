@@ -1,0 +1,6 @@
+/snowball
+*.gcov
+*.gcno
+*.gcda
+# Don't accidentally commit your loan data!
+*.dat
